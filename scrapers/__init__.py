@@ -1,2 +1,3 @@
-from scrapers.log import *
+from scrapers.web import *
 from scrapers.scraper import *
+
