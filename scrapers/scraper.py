@@ -60,7 +60,12 @@ class Scraper:
             t.daemon = True
             t.start()
 
-    def db_setup(self, db_config):
+    def db_setup(self):
+        db_config = {'db_name': self.config['DB_NAME'],
+                     'db_user': self.config['DB_USER'],
+                     'db_pass': self.config['DB_PASS'],
+                     'db_host': self.config['DB_HOST'],
+                     }
         self.db = Database(db_config)
 
     def cleanup(self):
