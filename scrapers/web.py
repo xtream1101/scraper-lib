@@ -9,15 +9,12 @@ from PIL import Image  # pip install pillow
 from io import BytesIO
 from bs4 import BeautifulSoup
 from selenium import webdriver
-import l2_custom_utils as cutil
+import custom_utils as cutil
 from fake_useragent import UserAgent
 from scraper_monitor import scraper_monitor
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-from l2_scrapers import DriverChrome
-from l2_scrapers import DriverFirefox
-from l2_scrapers import DriverRequests
-from l2_scrapers import DriverPhantomjs
+from scrapers import DriverChrome, DriverFirefox, DriverRequests, DriverPhantomjs
 
 logger = logging.getLogger(__name__)
 
@@ -690,16 +687,14 @@ class Web:
 
         return None
 
-    def download(url, file_path, header={}, redownload=False):
+    def download(self, url, file_path, header={}, redownload=False):
         """
         :return: True/False
         """
-        success = True
-
         if redownload is False:
             # See if we already have the file
             if os.path.isfile(file_path):
-                return True
+                return file_path
 
         cutil.create_path(file_path)
 
@@ -712,13 +707,13 @@ class Web:
                 out_file.write(data)
 
         except urllib.error.HTTPError as e:
-            success = False
+            file_path = None
             # We do not need to show the user 404 errors
             if e.code != 404:
                 logger.exception("Download Http Error {url}".format(url=url))
 
         except Exception:
-            success = False
+            file_path = None
             logger.exception("Download Error: {url}".format(url=url))
 
-        return success
+        return file_path

@@ -61,10 +61,10 @@ class Scraper:
             t.start()
 
     def db_setup(self):
-        db_config = {'db_name': self.config['DB_NAME'],
-                     'db_user': self.config['DB_USER'],
-                     'db_pass': self.config['DB_PASS'],
-                     'db_host': self.config['DB_HOST'],
+        db_config = {'db_name': self.config['db']['DB_NAME'],
+                     'db_user': self.config['db']['DB_USER'],
+                     'db_pass': self.config['db']['DB_PASS'],
+                     'db_host': self.config['db']['DB_HOST'],
                      }
         self.db = Database(db_config)
 
@@ -183,12 +183,12 @@ class Scraper:
 
         # Kill all web drivers
         for web_instance in web_instances:
-            if web_instance.driver is not None:
-                try:
-                    web_instance.driver.quit()
-                except AttributeError:
-                    # Requests has no .quit(), so this will be thrown
-                    pass
+            try:
+                if web_instance.driver.selenium is not None:
+                        web_instance.driver.selenium.quit()
+            except AttributeError:
+                # Requests has no .quit(), so this will be thrown
+                pass
 
         return item_list
 
