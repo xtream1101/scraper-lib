@@ -2,6 +2,7 @@
 
 Developed using Python 3.5 (use at least 3.4.2+)
 
+**TODO: Update Readme **
 
 ## Install
 - Download/clone the repo and run `python3 setup.py install`

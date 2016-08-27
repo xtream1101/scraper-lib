@@ -5,12 +5,14 @@ import json
 import urllib
 import logging
 import requests
+import tempfile
 from PIL import Image  # pip install pillow
 from io import BytesIO
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import custom_utils as cutil
 from fake_useragent import UserAgent
+from minio.error import ResponseError
 from scraper_monitor import scraper_monitor
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
@@ -687,33 +689,80 @@ class Web:
 
         return None
 
-    def download(self, url, file_path, header={}, redownload=False):
+    def download(self, url, filename, header={}, redownload=False):
         """
-        :return: True/False
+        Currently does not use the proxied driver
+        TODO: Use self.driver.* to download the file. This way we are behind the same proxy and headers
+        :return: the path of the file that was saved
         """
-        if redownload is False:
-            # See if we already have the file
-            if os.path.isfile(file_path):
-                return file_path
+        logger.info("Download {url} to {filename}".format(url=url, filename=filename))
+        if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
+            save_location = os.path.join(tempfile.gettempdir(), cutil.create_uid())
 
-        cutil.create_path(file_path)
+        else:
+            save_location = os.path.join(self.scraper.raw_config.get('global', 'base_data_dir'),
+                                         self.scraper.SCRAPER_NAME,
+                                         filename)
+            save_location = cutil.norm_path(save_location)
+            if redownload is False:
+                # See if we already have the file
+                if os.path.isfile(save_location):
+                    logger.info("File {save_location} already exists".format(save_location=save_location))
+                    return save_location
+
+
+
+        # Create the path on disk (excluding the file)
+        cutil.create_path(save_location)
 
         if url.startswith('//'):
             url = "http:" + url
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=header)) as response,\
-            open(file_path, 'wb') as out_file:
+            open(save_location, 'wb') as out_file:
                 data = response.read()
                 out_file.write(data)
 
         except urllib.error.HTTPError as e:
-            file_path = None
+            save_location = None
             # We do not need to show the user 404 errors
             if e.code != 404:
                 logger.exception("Download Http Error {url}".format(url=url))
 
         except Exception:
-            file_path = None
+            save_location = None
             logger.exception("Download Error: {url}".format(url=url))
 
-        return file_path
+        if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
+            # Upload to s3
+            local_file = save_location
+            save_location = self.upload_s3(filename, local_file)
+            os.remove(local_file)
+
+        return save_location
+
+    def upload_s3(self, filename, local_file):
+        """
+        Upload file to an s3 service and return the url for that object
+        """
+        logger.info("Upload {filename} to s3".format(filename=filename))
+        return_name = None
+
+        if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
+            try:
+                upload_path = '{env}/{filename}'.format(env=self.scraper.RUN_SCRAPER_AS, filename=filename)
+                self.scraper.s3.fput_object(self.scraper.SCRAPER_NAME, upload_path, local_file)
+                return_name = '{schema}://{host}/{bucket}/{file_location}'\
+                              .format(schema=self.scraper.raw_config.get('s3', 'schema'),
+                                      host=self.scraper.raw_config.get('s3', 'host'),
+                                      bucket=self.scraper.SCRAPER_NAME,
+                                      file_location=upload_path)
+
+            except ResponseError as error:
+                logger.exception("Error uploading file `{filename}` to bucket `{bucket}`"
+                                 .format(filename=filename, bucket=self.scraper.SCRAPER_NAME))
+
+        else:
+            logger.error("S3 is not enabled")
+
+        return return_name

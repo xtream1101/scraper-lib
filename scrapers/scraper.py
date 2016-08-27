@@ -3,8 +3,9 @@ import queue
 import numbers
 import logging
 import threading
-import configparser
-from scrapers import Web
+from minio import Minio
+from minio.error import ResponseError
+from scrapers import Web, raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, s3
 from custom_utils import Database
 import custom_utils as cutil
 
@@ -13,20 +14,18 @@ logger = logging.getLogger(__name__)
 
 class Scraper:
 
-    def __init__(self, platform, scrape_id, run_scraper_as='DEV', config_file=None):
+    def __init__(self, platform):
+        self.raw_config = raw_config
+        self.s3 = s3
+        self.SCRAPE_ID = SCRAPE_ID
+        self.RUN_SCRAPER_AS = RUN_SCRAPER_AS
+        self.SCRAPER_NAME = SCRAPER_NAME
+
         self.platform = platform
-        self.RUN_SCRAPER_AS = run_scraper_as.upper()
-        self.name = cutil.get_script_name(ext=False)
-        self.scrape_id = scrape_id
 
         self._used_proxy_list = []
 
-        if config_file is not None:
-            logger.debug("Using config: " + config_file)
-            self.config = configparser.ConfigParser()
-            self.config.read(config_file)
-
-        logger.info("Scraper ID: {}".format(self.scrape_id))
+        logger.info("Scraper ID: {scrape_id}".format(scrape_id=SCRAPE_ID))
 
         # Track the time it takes to do these things
         # Average is a rolling average [<total_amount>, <num_times>]
@@ -61,10 +60,10 @@ class Scraper:
             t.start()
 
     def db_setup(self):
-        db_config = {'db_name': self.config['db']['DB_NAME'],
-                     'db_user': self.config['db']['DB_USER'],
-                     'db_pass': self.config['db']['DB_PASS'],
-                     'db_host': self.config['db']['DB_HOST'],
+        db_config = {'db_name': raw_config.get('database', 'name'),
+                     'db_user': raw_config.get('database', 'user'),
+                     'db_pass': raw_config.get('database', 'pass'),
+                     'db_host': raw_config.get('database', 'host'),
                      }
         self.db = Database(db_config)
 
