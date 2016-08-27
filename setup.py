@@ -19,9 +19,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
     ],
-    dependency_links = [
-        'git+https://github.com/xtream1101/custom-utils.git@master#egg=custom_utils',
-        'git+https://github.com/xtream1101/scraper-monitor-lib@master#egg=scraper_monitor'
+    dependency_links=[
+        '-e git+https://github.com/xtream1101/custom-utils.git@master#egg=custom_utils',
+        '-e git+https://github.com/xtream1101/scraper-monitor-lib@master#egg=scraper_monitor'
     ],
     install_requires=[
         'custom_utils',

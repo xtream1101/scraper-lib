@@ -2,10 +2,51 @@
 
 Developed using Python 3.5 (use at least 3.4.2+)
 
-**TODO: Update Readme **
+**TODO: Update functions in Readme **
 
 ## Install
+- Use pip `pip3 install -e git+https://git.eddyhintze.com/xtream1101/scraper-lib.git@master#egg=scraper_lib`
 - Download/clone the repo and run `python3 setup.py install`
+
+When running a scraper, a config file must be passed in that has this content (the same config can be used for all scrapers):
+```python
+[global]
+# All scrapers have access to global
+base_log_dir = ~/log/
+base_data_dir = ~/scraper-data/
+
+[database]
+# Currently only works with postgres
+user =
+pass =
+name =
+host =
+
+[scraper-monitor]
+enabled = false
+# Do not have http:// in host
+host =
+apikey =
+
+[s3]
+enabled = false
+# `schema` either http or https
+schema = https
+host =
+access_key =
+secret_key =
+# Does not work yet
+bucket_policy =
+
+##
+# Scraper specific
+# Create a section for each scraper, use the scraper file name (exclude extension) and the name
+##
+[xkcd-comics]
+# Each scraper may have its own custom values depending on its needs
+# Every scraper can and a `scraper_key` if `scraper_monitor` is enabled
+scraper_key =
+```
 
 ## Usage
 
