@@ -116,13 +116,13 @@ if raw_config.getboolean('s3', 'enabled') is True:
         s3.make_bucket(SCRAPER_NAME, location="us-east-1")
 
     # Set access permissions, default to `private`
-    if raw_config.get('s3', 'bucket_policy') == 'read_only':
-        bucket_policy = Policy.READ_ONLY
-    elif raw_config.get('s3', 'bucket_policy') == 'private':
-        bucket_policy = Policy.PRIVATE
-    else:
-        logger.error('Invalid s3 bucket_policy, setting to private')
-        bucket_policy = Policy.PRIVATE
+    # if raw_config.get('s3', 'bucket_policy') == 'read_only':
+    #     bucket_policy = Policy.READ_ONLY
+    # elif raw_config.get('s3', 'bucket_policy') == 'private':
+    #     bucket_policy = Policy.PRIVATE
+    # else:
+    #     logger.error('Invalid s3 bucket_policy, setting to private')
+    #     bucket_policy = Policy.PRIVATE
 
     # TODO: bugs with current version of minio, uncomment when resolved
     # s3.set_bucket_policy(bucket_policy,
