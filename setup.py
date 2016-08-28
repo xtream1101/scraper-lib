@@ -26,7 +26,9 @@ setup(
     install_requires=[
         'custom_utils',
         'scraper_monitor',
+        'bs4',
         'minio',
+        'pillow',
         'requests',
         'selenium',
         'fake_useragent',
