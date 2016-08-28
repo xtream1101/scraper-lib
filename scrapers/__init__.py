@@ -99,7 +99,7 @@ if raw_config.getboolean('scraper-monitor', 'enabled') is True:
 s3 = None
 if raw_config.getboolean('s3', 'enabled') is True:
     from minio import Minio
-    from minio.policy import Policy
+    # from minio.policy import Policy  # TODO: bugs with current version of minio, uncomment when resolved
     from minio.error import ResponseError
 
     is_s3_secure = False
