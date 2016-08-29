@@ -16,15 +16,13 @@ base_log_dir = ~/log/
 base_data_dir = ~/scraper-data/
 
 [database]
-# Currently only works with postgres
-user =
-pass =
-name =
-host =
+# http://docs.sqlalchemy.org/en/latest/core/engines.html
+uri =
+
 
 [scraper-monitor]
 enabled = false
-# Do not have http:// in host
+# Do not have http in host
 host =
 apikey =
 

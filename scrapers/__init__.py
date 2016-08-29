@@ -46,8 +46,10 @@ raw_config.read(args.config)
 
 # Convert raw_config to a dict of only the sections the scraper needs
 config = {'global': dict(raw_config['global'].items())}
-config.update({'scraper': dict(raw_config[SCRAPER_NAME].items())})
-
+try:
+    config.update({'scraper': dict(raw_config[SCRAPER_NAME].items())})
+except KeyError:
+    print('{scraper_name} section missing from config file'.format(scraper_name=SCRAPER_NAME))
 # Check required fileds in config
 # TODO....
 

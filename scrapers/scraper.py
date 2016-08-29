@@ -6,7 +6,6 @@ import threading
 from minio import Minio
 from minio.error import ResponseError
 from scrapers import Web, raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, s3
-from custom_utils import Database
 import custom_utils as cutil
 
 logger = logging.getLogger(__name__)
@@ -58,14 +57,6 @@ class Scraper:
             t = threading.Thread(target=self._process_queue)
             t.daemon = True
             t.start()
-
-    def db_setup(self):
-        db_config = {'db_name': raw_config.get('database', 'name'),
-                     'db_user': raw_config.get('database', 'user'),
-                     'db_pass': raw_config.get('database', 'pass'),
-                     'db_host': raw_config.get('database', 'host'),
-                     }
-        self.db = Database(db_config)
 
     def cleanup(self):
         # Finish anything in the queue
