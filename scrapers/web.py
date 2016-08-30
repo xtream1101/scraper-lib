@@ -689,7 +689,7 @@ class Web:
 
         return None
 
-    def download(self, url, filename, header={}, redownload=False):
+    def download(self, url, filename, header={}, redownload=False, post_process=None):
         """
         Currently does not use the proxied driver
         TODO: Use self.driver.* to download the file. This way we are behind the same proxy and headers
@@ -709,8 +709,6 @@ class Web:
                 if os.path.isfile(save_location):
                     logger.info("File {save_location} already exists".format(save_location=save_location))
                     return save_location
-
-
 
         # Create the path on disk (excluding the file)
         cutil.create_path(save_location)
@@ -732,6 +730,10 @@ class Web:
         except Exception:
             save_location = None
             logger.exception("Download Error: {url}".format(url=url))
+
+        # Postprocess the file if needed
+        if post_process is not None:
+            post_process(save_location)
 
         if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
             # Upload to s3
