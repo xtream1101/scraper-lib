@@ -23,10 +23,14 @@ class DriverPhantomjs:
         # Recreate webdriver with new header
         self._update()
 
-    def set_proxy(self, proxy):
+    def set_proxy(self, proxy_parts):
         """
         Set proxy for requests session
         """
+        if proxy_parts is None:
+            proxy_parts = {}
+
+        proxy = proxy = proxy_parts.get('curl')
         # Did we change proxies?
         update_web_driver = False
         if self.last_proxy_value != proxy:

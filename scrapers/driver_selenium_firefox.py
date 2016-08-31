@@ -29,21 +29,23 @@ class DriverFirefox:
             # Recreate webdriver with new header
             self._update()
 
-    def set_proxy(self, proxy):
+    def set_proxy(self, proxy_parts):
         """
         Set proxy for firefox session
         """
+        if proxy_parts is None:
+            proxy_parts = {}
+
+        proxy = proxy_parts.get('curl')
         # Did we change proxies?
         update_web_driver = False
         if self.last_proxy_value != proxy:
             update_web_driver = True
             self.last_proxy_value = proxy
 
-        proxy = proxy.split(':')
-
         self.profile.set_preference("network.proxy.type", 1)
-        self.profile.set_preference("network.proxy.http", proxy[0])
-        self.profile.set_preference("network.proxy.http_port", proxy[1])
+        self.profile.set_preference("network.proxy.http", proxy_parts.get('ip'))
+        self.profile.set_preference("network.proxy.http_port", proxy_parts.get('port'))
         self.profile.update_preferences()
 
         # Recreate webdriver with new proxy settings

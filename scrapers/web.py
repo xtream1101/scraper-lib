@@ -142,7 +142,7 @@ class Web:
         Only get a new proxy if forced to or a different locale is requested
         :force_new: Default `False`. If `True` no matter what locale is requested a new proxy will be used
         """
-        proxy_parts = None
+        proxy_parts = self.proxy
 
         if locale is not None:
             # locale should always be upper case
@@ -151,15 +151,17 @@ class Web:
         if locale is None:
             logger.warning("Setting proxy to None")
 
-        elif force_new is True or (locale != self._current_proxy_locale and locale != 'ANY'):
+        elif force_new is True or (locale != self._current_proxy_locale):
             # Check before changing proxy to see if it is even necessary
             # Set proxy if forced or if the current proxy locale is different then the locale requested
             proxy_parts = self.scraper.get_new_proxy(iso_country_code=locale)
+
             if proxy_parts is None:
                 # This way we can still use .get() with out things breaking
                 proxy_parts = {}
 
-            logger.warning("Setting proxy for locale {} to ip {}".format(locale, proxy_parts.get('address')))
+            logger.warning("Setting proxy for country {country} to ip {ip}"
+                           .format(country=proxy_parts.get('country'), ip=proxy_parts.get('ip')))
 
         # Store what locale was last used
         self._current_proxy_locale = locale
@@ -547,7 +549,7 @@ class Web:
             if track_stat is True:
                 self.scraper.track_stat(stat_to_track, time.time() - start_time)  # Stat tracking
 
-            logger.exception("Unknown Exception [get_site]: {}".format(url))
+            logger.exception("Unknown Exception [get_site]: {url}".format(url=url))
 
         return rdata
 

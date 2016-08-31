@@ -12,10 +12,14 @@ class DriverRequests:
     def update_header(self, header):
         self.req.headers.update(header)
 
-    def set_proxy(self, proxy):
+    def set_proxy(self, proxy_parts):
         """
         Set proxy for requests session
         """
+        if proxy_parts is None:
+            proxy_parts = {}
+
+        proxy = proxy_parts.get('curl')
         if proxy is None:
             self.req.proxies = {'http': None,
                                 'https': None

@@ -2,6 +2,7 @@ import time
 import queue
 import numbers
 import logging
+import requests
 import threading
 from minio import Minio
 from minio.error import ResponseError
@@ -192,16 +193,59 @@ class Scraper:
         """
         if iso_country_code is None, a random proxy will be choosen from a pool of all locales
         :param iso_country_code: String - 2 char country code, case-insensitive, ISO 3166 standard
-        :return: a dict with the parts 'protocol', 'username', 'password', 'address', 'port'
+        :return: a dict with the parts 'protocol', 'ip', 'port', 'ipport'
         """
         selected_proxy = {'protocol': None,
-                          'username': None,
-                          'password': None,
-                          'address': None,
+                          'ip': None,
                           'port': None,
+                          'ipport': None,
                           }
+        proxicity_enabled = raw_config.getboolean(SCRAPER_NAME, 'proxicity_enabled')
+        if 'proxicity' not in raw_config.sections() and proxicity_enabled is not True:
+            return selected_proxy
 
-        # TODO
+        if iso_country_code is None or iso_country_code.upper() == 'ANY':
+            iso_country_code = 'US'
+
+        iso_country_code = iso_country_code.upper()
+
+        proxy_source = ('https://www.proxicity.io/api/v1/{apikey}/proxy?format=json'
+                        '&protocol=http'
+                        # '&country={country}'  # Disabled for now
+                        '&refererSupport=true'
+                        '&userAgentSupport=true'
+                        '&httpsSupport=true'
+                        '&isAnonymous=true'
+                        ).format(apikey=raw_config.get('proxicity', 'apikey'),
+                                 country=iso_country_code)
+        while True:
+            logger.info("Getting new proxy...")
+            response = requests.get(proxy_source, timeout=30)
+
+            if response.status_code == requests.codes.ok:
+                json_data = response.json()
+                selected_proxy['protocol'] = json_data.get('protocol')
+                selected_proxy['ip'] = json_data.get('ip')
+                selected_proxy['port'] = json_data.get('port')
+                selected_proxy['ipport'] = json_data.get('ipPort')
+                selected_proxy['curl'] = json_data.get('curl')
+                selected_proxy['country'] = json_data.get('country')
+
+                # Check proxy
+                try:
+                    logger.info("Test proxy server")
+                    test_url = 'https://lumtest.com/myip.json'
+                    response_test = requests.get(test_url, proxies={'http': selected_proxy['curl'],
+                                                                    'https': selected_proxy['curl']})
+                    if response_test.status_code == requests.codes.ok:
+                        break
+                except Exception:
+                    pass
+            else:
+                logger.error("Bad response from server while getting a proxy: {status_code}-{json}"
+                             .format(status_code=response.status_code, json=response.json()))
+
+            logger.info("Bad proxy, try again")
 
         return selected_proxy
 
