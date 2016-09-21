@@ -1,10 +1,10 @@
 import os
 import sys
+import cutil
 import logging
 import argparse
 import configparser
 import logging.handlers
-import custom_utils as cutil
 
 from scraper_lib.driver_requests import DriverRequests  # Must be above Web import
 from scraper_lib.driver_selenium_chrome import DriverChrome  # Must be above Web import
