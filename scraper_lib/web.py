@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+import cutil
 import urllib
 import logging
 import requests
@@ -10,13 +11,12 @@ from PIL import Image  # pip install pillow
 from io import BytesIO
 from bs4 import BeautifulSoup
 from selenium import webdriver
-import custom_utils as cutil
 from fake_useragent import UserAgent
 from minio.error import ResponseError
 from scraper_monitor import scraper_monitor
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-from scrapers import DriverChrome, DriverFirefox, DriverRequests, DriverPhantomjs
+from scraper_lib import DriverChrome, DriverFirefox, DriverRequests, DriverPhantomjs
 
 logger = logging.getLogger(__name__)
 

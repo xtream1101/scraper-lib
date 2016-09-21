@@ -6,8 +6,8 @@ import requests
 import threading
 from minio import Minio
 from minio.error import ResponseError
-from scrapers import Web, raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, s3
-import custom_utils as cutil
+from scraper_lib import Web, raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, s3
+import cutil
 
 logger = logging.getLogger(__name__)
 

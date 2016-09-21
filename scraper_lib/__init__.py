@@ -6,12 +6,12 @@ import configparser
 import logging.handlers
 import custom_utils as cutil
 
-from scrapers.driver_requests import DriverRequests  # Must be above Web import
-from scrapers.driver_selenium_chrome import DriverChrome  # Must be above Web import
-from scrapers.driver_selenium_firefox import DriverFirefox  # Must be above Web import
-from scrapers.driver_selenium_phantomjs import DriverPhantomjs  # Must be above Web import
+from scraper_lib.driver_requests import DriverRequests  # Must be above Web import
+from scraper_lib.driver_selenium_chrome import DriverChrome  # Must be above Web import
+from scraper_lib.driver_selenium_firefox import DriverFirefox  # Must be above Web import
+from scraper_lib.driver_selenium_phantomjs import DriverPhantomjs  # Must be above Web import
 
-from scrapers.web import Web, SeleniumHTTPError
+from scraper_lib.web import Web, SeleniumHTTPError
 
 
 # ALWAYS use UTC time for your scraper. That way all data is consistent no matter where it is running from
@@ -132,4 +132,4 @@ if raw_config.getboolean('s3', 'enabled') is True:
     #                      'data')
 
 # Must be at the bottom so scraper.py has access to all of these settings/vars
-from scrapers.scraper import Scraper
+from scraper_lib.scraper import Scraper
