@@ -1,6 +1,7 @@
 import os
 import sys
 import cutil
+import socket
 import logging
 import argparse
 import configparser
@@ -27,6 +28,7 @@ args = parser.parse_args()
 RUN_SCRAPER_AS = args.environment.upper()
 SCRAPER_NAME = cutil.get_script_name(ext=False)
 SCRAPE_ID = cutil.create_uid()
+MACHINE_NAME = socket.gethostname()
 
 if RUN_SCRAPER_AS not in ['DEV', 'PROD']:
     print("You must set the env var RUN_SCRAPER_AS to DEV or PROD")
@@ -85,12 +87,13 @@ if raw_config.getboolean('scraper-monitor', 'enabled') is True:
                   env=RUN_SCRAPER_AS)
 
     # Start/configure the scraper monitoring
-    scraper_monitor.start(SCRAPER_NAME,
-                          raw_config.get('scraper-monitor', 'host'),
-                          raw_config.get('scraper-monitor', 'apikey'),
-                          config['scraper']['scraper_key'],
-                          SCRAPE_ID,
-                          RUN_SCRAPER_AS)
+    scraper_monitor.start(scraper_name=SCRAPER_NAME,
+                          host=raw_config.get('scraper-monitor', 'host'),
+                          apikey=raw_config.get('scraper-monitor', 'apikey'),
+                          scraper_key=config['scraper']['scraper_key'],
+                          scraper_run=SCRAPE_ID,
+                          environment=RUN_SCRAPER_AS,
+                          machine_name=MACHINE_NAME)
 
     # Send logs to scraper monitor
     http_handler = logging.handlers.HTTPHandler(raw_config.get('scraper-monitor', 'host'), url, method='POST')

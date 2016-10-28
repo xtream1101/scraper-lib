@@ -12,7 +12,7 @@ from io import BytesIO
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from fake_useragent import UserAgent
-from minio.error import ResponseError
+# from minio.error import ResponseError
 from scraper_monitor import scraper_monitor
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
