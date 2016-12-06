@@ -311,19 +311,24 @@ class Web:
 
         Return the filepath of the image
         """
-        return_name = None
 
         if self.driver.selenium is None:
             # If no selenium driver then we are done here
             # TODO: create a self.driver_for_requests if one does not exists for use with requests as a primary
             return None
 
-        # Generate tmp filename
-        tmp_filename = {'full': './tmp_screenshots/{}.png'.format(cutil.create_uid()),
-                        }
-        cutil.create_path(tmp_filename['full'], is_dir=False)
-        # The file stored in `save_image` will be the one the user gets
-        tmp_filename['save_image'] = tmp_filename['full']
+        # Generate filename location
+        if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
+            save_location = os.path.join(tempfile.gettempdir(), cutil.create_uid())
+
+        else:
+            save_location = os.path.join(self.scraper.raw_config.get('global', 'base_data_dir'),
+                                         self.scraper.SCRAPER_NAME,
+                                         filename)
+            save_location = cutil.norm_path(save_location)
+
+        cutil.create_path(save_location)
+        logger.info("Taking screenshot, {filename}".format(filename=save_location))
 
         # If a background color does need to be set
         # self.driver.selenium.execute_script('document.body.style.background = "{}"'.format('white'))
@@ -333,9 +338,9 @@ class Web:
         time.sleep(delay)
         if self.driver_type == 'selenium_chrome':
             # Need to do this for chrome to get a fullpage screenshot
-            self.chrome_fullpage_screenshot(tmp_filename['full'], delay)
+            self.chrome_fullpage_screenshot(save_location, delay)
         else:
-            self.driver.selenium.get_screenshot_as_file(tmp_filename['full'])
+            self.driver.selenium.get_screenshot_as_file(save_location)
 
         # Use .png extenstion for users save file
         if not filename.endswith('.png'):
@@ -343,16 +348,12 @@ class Web:
 
         # If an element was passed, just get that element so crop the screenshot
         if element is not None:
-            # Create tmp file to save cropped image to
-            tmp_filename['cropped'] = './tmp_screenshots/{}.png'.format(cutil.create_uid())
-            cutil.create_path(tmp_filename['cropped'], is_dir=False)
-            tmp_filename['save_image'] = tmp_filename['cropped']
             # Crop the image
             el_location = element.location
             el_size = element.size
             try:
-                cutil.crop_image(tmp_filename['full'],
-                                 output_file=tmp_filename['cropped'],
+                cutil.crop_image(save_location,
+                                 output_file=save_location,
                                  width=int(el_size['width']),
                                  height=int(el_size['height']),
                                  x=int(el_location['x']),
@@ -361,23 +362,13 @@ class Web:
             except Exception as e:
                 raise e.with_traceback(sys.exc_info()[2])
 
-        # Save to local file system
-        # First make sure the correct directories are set up
-        cutil.create_path(filename, is_dir=False)
-        # Move the file
-        os.rename(tmp_filename['save_image'], filename)
-        # Always return the absolute path to the saved file
-        return_name = os.path.abspath(filename)
+        if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
+            # Upload to s3
+            local_file = save_location
+            save_location = self.upload_s3(filename, local_file)
+            os.remove(local_file)
 
-        # Now remove any tmp files
-        for key in tmp_filename:
-            try:
-                os.remove(tmp_filename[key])
-            except Exception:
-                # Try and remove if it can
-                pass
-
-        return return_name
+        return save_location
 
     ###########################################################################
     # Get/load page
@@ -618,7 +609,6 @@ class Web:
 
             if response.status_code == requests.codes.ok:
                 # Return the correct format
-                rdata = None
                 if page_format == 'html':
                     rdata = self.get_soup(response.text, input_type='html')
 
@@ -697,6 +687,9 @@ class Web:
         TODO: Use self.driver.* to download the file. This way we are behind the same proxy and headers
         :return: the path of the file that was saved
         """
+        if len(header) == 0:
+            header = self.header
+
         logger.info("Download {url} to {filename}".format(url=url, filename=filename))
         if self.scraper.raw_config.getboolean('s3', 'enabled') is True:
             save_location = os.path.join(tempfile.gettempdir(), cutil.create_uid())
