@@ -7,14 +7,6 @@ import argparse
 import configparser
 import logging.handlers
 
-from scraper_lib.driver_requests import DriverRequests  # Must be above Web import
-from scraper_lib.driver_selenium_chrome import DriverChrome  # Must be above Web import
-from scraper_lib.driver_selenium_firefox import DriverFirefox  # Must be above Web import
-from scraper_lib.driver_selenium_phantomjs import DriverPhantomjs  # Must be above Web import
-
-from scraper_lib.web import Web, SeleniumHTTPError
-
-
 # ALWAYS use UTC time for your scraper. That way all data is consistent no matter where it is running from
 os.environ['TZ'] = 'UTC'
 
@@ -54,6 +46,8 @@ except KeyError:
     print('{scraper_name} section missing from config file'.format(scraper_name=SCRAPER_NAME))
 # Check required fileds in config
 # TODO....
+
+BASE_SAVE_DIR = os.path.join(raw_config.get('global', 'base_data_dir'), SCRAPER_NAME)
 
 # Set global logging settings
 logger = logging.getLogger()
@@ -102,37 +96,38 @@ if raw_config.getboolean('scraper-monitor', 'enabled') is True:
 
 # Set up S3 bucket if enabled in the config
 s3 = None
-if raw_config.getboolean('s3', 'enabled') is True:
-    from minio import Minio
-    # from minio.policy import Policy  # TODO: bugs with current version of minio, uncomment when resolved
-    from minio.error import ResponseError
+# if raw_config.getboolean('s3', 'enabled') is True:
+#     from minio import Minio
+#     # from minio.policy import Policy  # TODO: bugs with current version of minio, uncomment when resolved
+#     from minio.error import ResponseError
 
-    is_s3_secure = False
-    if raw_config.get('s3', 'schema') == 'https':
-        is_s3_secure = True
+#     is_s3_secure = False
+#     if raw_config.get('s3', 'schema') == 'https':
+#         is_s3_secure = True
 
-    s3 = Minio(raw_config.get('s3', 'host'),
-               access_key=raw_config.get('s3', 'access_key'),
-               secret_key=raw_config.get('s3', 'secret_key'),
-               secure=is_s3_secure)
+#     s3 = Minio(raw_config.get('s3', 'host'),
+#                access_key=raw_config.get('s3', 'access_key'),
+#                secret_key=raw_config.get('s3', 'secret_key'),
+#                secure=is_s3_secure)
 
-    # Check if bucket exists, if not create it
-    if s3.bucket_exists(SCRAPER_NAME) is False:
-        s3.make_bucket(SCRAPER_NAME, location="us-east-1")
+#     # Check if bucket exists, if not create it
+#     if s3.bucket_exists(SCRAPER_NAME) is False:
+#         s3.make_bucket(SCRAPER_NAME, location="us-east-1")
 
-    # Set access permissions, default to `private`
-    # if raw_config.get('s3', 'bucket_policy') == 'read_only':
-    #     bucket_policy = Policy.READ_ONLY
-    # elif raw_config.get('s3', 'bucket_policy') == 'private':
-    #     bucket_policy = Policy.PRIVATE
-    # else:
-    #     logger.error('Invalid s3 bucket_policy, setting to private')
-    #     bucket_policy = Policy.PRIVATE
+#     # Set access permissions, default to `private`
+#     if raw_config.get('s3', 'bucket_policy') == 'read_only':
+#         bucket_policy = Policy.READ_ONLY
+#     elif raw_config.get('s3', 'bucket_policy') == 'private':
+#         bucket_policy = Policy.PRIVATE
+#     else:
+#         logger.error('Invalid s3 bucket_policy, setting to private')
+#         bucket_policy = Policy.PRIVATE
 
-    # TODO: bugs with current version of minio, uncomment when resolved
-    # s3.set_bucket_policy(bucket_policy,
-    #                      SCRAPER_NAME,
-    #                      'data')
+#     # TODO: bugs with current version of minio, uncomment when resolved
+#     s3.set_bucket_policy(bucket_policy,
+#                          SCRAPER_NAME,
+#                          'data')
+
 
 # Must be at the bottom so scraper.py has access to all of these settings/vars
 from scraper_lib.scraper import Scraper

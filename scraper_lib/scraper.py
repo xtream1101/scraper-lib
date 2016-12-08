@@ -1,3 +1,4 @@
+import cutil
 import time
 import queue
 import numbers
@@ -6,8 +7,7 @@ import requests
 import threading
 # from minio import Minio
 # from minio.error import ResponseError
-from scraper_lib import Web, raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, s3
-import cutil
+from scraper_lib import raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, BASE_SAVE_DIR, s3
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ class Scraper:
         self.SCRAPE_ID = SCRAPE_ID
         self.RUN_SCRAPER_AS = RUN_SCRAPER_AS
         self.SCRAPER_NAME = SCRAPER_NAME
+        self.BASE_SAVE_DIR = BASE_SAVE_DIR
 
         self.platform = platform
 
@@ -126,15 +127,9 @@ class Scraper:
     def track_stat(self, stat_to_track, value):
         self.stat_queue.put([stat_to_track, value])
 
-    def thread_profile(self, num_threads, driver_type, data, callback, *args, **kwargs):
+    def thread_profile(self, num_threads, web_driver, data, callback, *args, **kwargs):
         """
         Create a new Profile for each thread created.
-
-        Parameters
-        ----------
-        driver_type : str
-            Either 'selenium' | 'requests' currently.
-
         """
         if num_threads <= 0:
             logger.error("Must have at least 1 thread for thread_profile, not {}".format(num_threads))
@@ -144,12 +139,12 @@ class Scraper:
         item_list = []
 
         def _thread_run():
-            web = Web(self, driver_type)
+            web = web_driver()
             web_instances.append(web)
             while True:
                 item = q.get()
                 try:
-                    item_list.append(callback(web, item, *args, **kwargs))
+                    item_list.append(callback(self, web, item, *args, **kwargs))
                 except Exception:
                     logger.exception("Scraper()._thread_run")
                 q.task_done()
@@ -174,12 +169,7 @@ class Scraper:
 
         # Kill all web drivers
         for web_instance in web_instances:
-            try:
-                if web_instance.driver.selenium is not None:
-                        web_instance.driver.selenium.quit()
-            except AttributeError:
-                # Requests has no .quit(), so this will be thrown
-                pass
+            web_instance.quit()
 
         return item_list
 
@@ -259,3 +249,29 @@ class Scraper:
         # TODO
 
         return apikey
+
+    def upload_s3(self, filename, local_file):
+        """
+        Upload file to an s3 service and return the url for that object
+        """
+        logger.info("Upload {filename} to s3".format(filename=filename))
+        return_name = None
+
+        if self.scraper is not None and self.scraper.raw_config.getboolean('s3', 'enabled') is True:
+            try:
+                upload_path = '{env}/{filename}'.format(env=self.scraper.RUN_SCRAPER_AS, filename=filename)
+                self.scraper.s3.fput_object(self.scraper.SCRAPER_NAME, upload_path, local_file)
+                return_name = '{schema}://{host}/{bucket}/{file_location}'\
+                              .format(schema=self.scraper.raw_config.get('s3', 'schema'),
+                                      host=self.scraper.raw_config.get('s3', 'host'),
+                                      bucket=self.scraper.SCRAPER_NAME,
+                                      file_location=upload_path)
+
+            except ResponseError as error:
+                logger.exception("Error uploading file `{filename}` to bucket `{bucket}`"
+                                 .format(filename=filename, bucket=self.scraper.SCRAPER_NAME))
+
+        else:
+            logger.error("S3 is not enabled")
+
+        return return_name
