@@ -47,7 +47,9 @@ except KeyError:
 # Check required fileds in config
 # TODO....
 
-BASE_SAVE_DIR = os.path.join(raw_config.get('global', 'base_data_dir'), SCRAPER_NAME)
+BASE_DATA_DIR = cutil.norm_path(raw_config.get('global', 'base_data_dir'))
+BASE_SAVE_DIR = os.path.join(BASE_DATA_DIR, SCRAPER_NAME)
+cutil.create_path(BASE_SAVE_DIR)
 
 # Set global logging settings
 logger = logging.getLogger()

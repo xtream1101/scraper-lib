@@ -7,7 +7,7 @@ import requests
 import threading
 # from minio import Minio
 # from minio.error import ResponseError
-from scraper_lib import raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, BASE_SAVE_DIR, s3
+from scraper_lib import raw_config, SCRAPE_ID, RUN_SCRAPER_AS, SCRAPER_NAME, BASE_SAVE_DIR, BASE_DATA_DIR, s3
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ class Scraper:
         self.RUN_SCRAPER_AS = RUN_SCRAPER_AS
         self.SCRAPER_NAME = SCRAPER_NAME
         self.BASE_SAVE_DIR = BASE_SAVE_DIR
+        self.BASE_DATA_DIR = BASE_DATA_DIR
 
         self.platform = platform
 
