@@ -4,8 +4,8 @@ from setuptools import setup
 setup(
     name='scraper_lib',
     packages=['scraper_lib'],
-    version='1.0.1',
-    description='Platform specific scrapers',
+    version='0.1.0',
+    description='Used to make scraping easier',
     author='Eddy Hintze',
     author_email="eddy.hintze@gmail.com",
     url="https://github.com/xtream1101/scraper-lib",
@@ -20,12 +20,13 @@ setup(
         "Topic :: Utilities",
     ],
     install_requires=[
-        'cutil',
         'bs4',
+        'cutil',
         'minio',
         'pillow',
         'requests',
         'selenium',
+        'web_wrapper',
         'fake_useragent',
     ],
 )
